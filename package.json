@@ -2,7 +2,7 @@
   "name": "blocklib",
   "version": "1.0",
   "description": "A basic interface library",
-  "license": "GPL-3.0",
+  "license": "AGPL-3.0-or-later",
   "esy": {
     "build": "./build.sh",
     "buildsInSource": "_build"
