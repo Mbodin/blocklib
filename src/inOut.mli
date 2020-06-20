@@ -3,6 +3,9 @@
 
 open Libutils
 
+(** A type for CSS-classes. *)
+type css_class = string
+
 (** The different kinds of link styles *)
 type link =
   | Simple (** A usual text-based link. *)
@@ -24,7 +27,7 @@ type cell_option = {
          the cell is a normal cell, but if it is more than [1], the cell has
          been merged with cells below. *) ;
     col : int (** Similar than [row], but merging columns instead of rows. *) ;
-    classes : string list (** Some CSS-specific classes. *)
+    classes : css_class list (** Some CSS-specific classes. *)
   }
 
 (** The options for a normal cell. *)
@@ -32,7 +35,7 @@ val default : cell_option
 
 (** A simplified representation of DOM’s nodes. *)
 type 'node block =
-  | Div of layout * 'node block list (** A div node, with its layout. *)
+  | Div of layout * css_class list * 'node block list (** A div node, with its layout. *)
   | P of 'node block list (** A paragraph node. *)
   | List of bool * 'node block list
       (** A list of items.
@@ -191,8 +194,18 @@ module type T = sig
      It also might return [None] if no file has been selected. *)
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
 
-  (** Create a new node whose content can be controlled by the returned function. **)
+  (** Create a new node whose content can be controlled by the returned function. *)
   val controlableNode : node -> node * (node -> unit)
+
+  (** Create a node that can be removed by calling the returned function. *)
+  val removableNode : node -> node * (unit -> unit)
+
+  (** Create a node that can be extended by calling the returned function. *)
+  val extendableNode : node -> node * (node -> unit)
+
+  (** Create an empty list, which can be extended by new elements by calling the returned function.
+     This function in turn returns a function to remove each added item. *)
+  val extendableList : unit -> node * (node -> unit -> unit)
 
 end
 

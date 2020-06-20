@@ -192,12 +192,16 @@ let link_to_class = function
 let add_class_link a s =
   List.iter (fun c -> a##.classList##add (Js.string c)) (link_to_class s)
 
+let apply_classes n =
+  List.iter (fun str -> n##.classList##add (Js.string str))
+
 let rec block_node =
   let appendChilds f e =
     List.iter (fun b -> Dom.appendChild e (f (block_node b))) in
   function
-  | InOut.Div (layout, l) ->
+  | InOut.Div (layout, classes, l) ->
     let div = Dom_html.createDiv document in
+    apply_classes div classes ;
     let _ =
       match layout with
       | InOut.Normal -> ()
@@ -273,8 +277,6 @@ let rec block_node =
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;
     a
   | InOut.Table (classes, headers, content) ->
-    let apply_classes n =
-      List.iter (fun str -> n##.classList##add (Js.string str)) in
     let apply_options o c =
       assert (o.InOut.row >= 1) ;
       if o.InOut.row > 1 then
@@ -691,4 +693,29 @@ let controlableNode n =
     Dom.appendChild div n in
   update n ;
   (div, update)
+
+let extendableNode n =
+  let div = Dom_html.createDiv document in
+  let add n =
+    Dom.appendChild div n in
+  add n ;
+  (div, add)
+
+let removableNode n =
+  let div = Dom_html.createDiv document in
+  Dom.appendChild div n ;
+  let remove _ =
+    match Js.Opt.to_option div##.parentNode with
+    | None -> ()
+    | Some p -> Dom.removeChild p div in
+  (div, remove)
+
+let extendableList _ =
+  let l = Dom_html.createUl document in
+  let add n =
+    let i = Dom_html.createLi document in
+    Dom.appendChild i n ;
+    Dom.appendChild l i ;
+    fun _ -> Dom.removeChild l i in
+  (l, add)
 

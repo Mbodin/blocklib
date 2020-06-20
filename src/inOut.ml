@@ -1,6 +1,8 @@
 
 open Libutils
 
+type css_class = string
+
 type link =
   | Simple
   | Button of bool
@@ -13,7 +15,7 @@ type layout =
 type cell_option = {
     row : int ;
     col : int ;
-    classes : string list
+    classes : css_class list
   }
 
 let default = {
@@ -23,7 +25,7 @@ let default = {
   }
 
 type 'node block =
-  | Div of layout * 'node block list
+  | Div of layout * css_class list * 'node block list
   | P of 'node block list
   | List of bool * 'node block list
   | Space
@@ -58,7 +60,7 @@ let rec add_spaces =
         a :: Text " " :: aux (b :: l)
       else a :: aux (b :: l) in
   let aux l = aux (List.map add_spaces l) in function
-    | Div (layout, l) -> Div (layout, aux l)
+    | Div (layout, classes, l) -> Div (layout, classes, aux l)
     | P l -> P (aux l)
     | List (visible, l) -> List (visible, List.map add_spaces l)
     | FoldableBlock (show, title, b) ->
@@ -122,6 +124,9 @@ module type T = sig
   val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
   val controlableNode : node -> node * (node -> unit)
+  val removableNode : node -> node * (unit -> unit)
+  val extendableNode : node -> node * (node -> unit)
+  val extendableList : unit -> node * (node -> unit -> unit)
 
 end
 
