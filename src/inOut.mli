@@ -69,6 +69,12 @@ type 'node block =
 (** Adds the expected spaces between block elements. *)
 val add_spaces : 'node block -> 'node block
 
+(** Describe how nodes are printed. *)
+type node_kind =
+  | NormalResponse (** A normal response from the program. *)
+  | ErrorResponse (** An error message. *)
+  | RawResponse (** A low-level response, printed as-is. *)
+
 (** This is the signature specified in this file.
    It is satisfied by the various files [lib/inOut_*.ml]. *)
 module type T = sig
@@ -132,12 +138,11 @@ module type T = sig
   (** Converts the block to a node. *)
   val block_node : node block -> node
 
-  (** Adds the node to the [response] div in the main webpage.
-     If [error] is [true], the node is highlighted as an error. *)
-  val print_node : ?error:bool -> node -> unit
+  (** Adds the node to the [response] div in the main webpage. *)
+  val print_node : ?kind:node_kind -> node -> unit
 
   (** A composition of [add_spaces], [block_node], and [print_node]. *)
-  val print_block : ?error:bool -> node block -> unit
+  val print_block : ?kind:node_kind -> node block -> unit
 
   (** Clears the [response] div in the main webpage. *)
   val clear_response : unit -> unit
@@ -193,6 +198,10 @@ module type T = sig
      separate strings.
      It also might return [None] if no file has been selected. *)
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
+
+  (** Create a node which can be clicked.
+     Clicks launch the [onChange] functions. *)
+  val clickableNode : node -> unit sinteraction
 
   (** Create a new node whose content can be controlled by the returned function. *)
   val controlableNode : node -> node * (node -> unit)

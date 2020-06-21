@@ -207,7 +207,7 @@ let rec block_node =
       | InOut.Normal -> ()
       | InOut.Centered ->
         div##.className := Js.string "center"
-      | Inlined ->
+      | InOut.Inlined ->
         div##.className := Js.string "inlined" in
     appendChilds Utils.id div l ;
     (div :> Dom_html.element Js.t)
@@ -329,15 +329,20 @@ let rec clear_node n =
 let clear_response _ =
   clear_node (get_response ())
 
-let print_node ?(error = false) n =
+let print_node ?(kind = InOut.NormalResponse) n =
   let response = get_response () in
-  let div = Dom_html.createDiv document in
-  div##.className := Js.string (if error then "error" else "block") ;
-  Dom.appendChild div n ;
-  Dom.appendChild response div
+  let embed cl =
+    let div = Dom_html.createDiv document in
+    div##.className := Js.string cl ;
+    Dom.appendChild div n ;
+    Dom.appendChild response div in
+  match kind with
+  | InOut.NormalResponse -> embed "block"
+  | InOut.ErrorResponse -> embed "error"
+  | InOut.RawResponse -> Dom.appendChild response n
 
-let print_block ?(error = false) =
-  Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
+let print_block ?(kind = InOut.NormalResponse) =
+  Utils.compose (print_node ~kind) (Utils.compose block_node InOut.add_spaces)
 
 
 let createTextOutput txt =
@@ -351,10 +356,13 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
-(** Given a DOM node, an input [input] an internal [get] function, the actual [get] function,
-   a [set] function, and a [lock] and [unlock] functions, create an interaction.
-   The triggerring of the [onChange] functions are dealt automatically. *)
-let createInteraction node input get actual_get set lock unlock =
+(** Given a DOM node, a function to set up one function called everytime that there is a change,
+   a [get] function, the actual get function, a [set] function, as well as a [lock] and [unlock]
+   functions, create an interaction.
+   The [actual_get] function is triggered much less frequently than the [get] function:
+   the [get] function is meant to access the internal value, while the [actual_get] is meant
+   to do perform a read. *)
+let createInteraction node setOnChange get actual_get set lock unlock =
   let l = ref [] in
   let locked = ref false in
   let onLock = ref [] in
@@ -370,10 +378,7 @@ let createInteraction node input get actual_get set lock unlock =
     if !l = [] then (
       (** To avoid placing too many event listeners, we only add it once we know that there is
          at least one function. *)
-      input##.onchange :=
-        Dom_html.handler (fun _ ->
-          trigger () ;
-          Js._false)
+      setOnChange trigger
     ) ;
     l := f :: !l in
   let trigger set x =
@@ -395,13 +400,22 @@ let createInteraction node input get actual_get set lock unlock =
     onLockChange = onLockChange
   }
 
-(** Variant for the case where [node] has been created using [Dom_html.createInput],
-   and for which we can define a default [lock] and [unlock] function. *)
+(** Given a DOM node, an input [input], an internal [get] function, the actual get function,
+   a [set] function, and a [lock] and [unlock] functions, create an interaction.
+   The triggerring of the [onChange] functions are dealt automatically using the [onchange]
+   property of the input. . *)
+let createInteractionInput node input =
+  let setOnChange f =
+    input##.onchange := Dom_html.handler (fun _ -> f () ; Js._false) in
+  createInteraction node setOnChange
+
+(** Variant for the case where [node] has been created using [Dom_html.createInput].
+   In such cases, there are natural implementations of the [lock] and [unlock] functions. *)
 let createInputInteraction (node : Dom_html.inputElement Js.t) get actual_get set =
   let setLock status = node##.disabled := Js.bool status in
   let lock _ = setLock true in
   let unlock _ = setLock false in
-  createInteraction node node get actual_get set lock unlock
+  createInteractionInput node node get actual_get set lock unlock
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
@@ -452,7 +466,7 @@ let createListInput l =
     else Option.map fst (List.nth_opt l i) in
   let lock _ = input##.disabled := Js.bool true in
   let unlock _ = if l <> [] then input##.disabled := Js.bool false in
-  let i = createInteraction input input get_stro get set lock unlock in
+  let i = createInteractionInput input input get_stro get set lock unlock in
   { i with
       set = (fun a -> i.set (Some a)) ;
       onChange =
@@ -603,7 +617,7 @@ let createResponsiveListInput default placeholder get =
   let unlock _ =
     input##.disabled := Js.bool false ;
     ul##.classList##remove (Js.string "autocomplete-disabled") in
-  createInteraction main input get get set lock unlock
+  createInteractionInput main input get get set lock unlock
 
 let createPercentageInput d =
   let maxv = 1_000_000 in
@@ -653,7 +667,7 @@ let createSwitch text descr texton textoff b =
   let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in
   let lock _ = input##.disabled := Js.bool true in
   let unlock _ = input##.disabled := Js.bool false in
-  createInteraction label input get get set lock unlock
+  createInteractionInput label input get get set lock unlock
 
 let createFileImport extensions prepare =
   let input = Dom_html.createInput ~_type:(Js.string "file") document in
@@ -685,6 +699,18 @@ let createFileImport extensions prepare =
       let%lwt l = aux [] 0 in
       Lwt.return (Some (String.concat "," (List.map fst l),
                         String.concat "" (List.map snd l))))
+
+let clickableNode n =
+  let div = Dom_html.createDiv document in
+  div##.className := Js.string "clickable" ;
+  Dom.appendChild div n ;
+  let get _ = () in
+  let set _ = () in
+  let lock _ = n##.classList##add (Js.string "locked") in
+  let unlock _ = n##.classList##remove (Js.string "locked") in
+  let setOnChange f =
+    div##.onclick := Dom_html.handler (fun _ -> f () ; Js._false) in
+  createInteraction div setOnChange get get set lock unlock
 
 let controlableNode n =
   let div = Dom_html.createDiv document in

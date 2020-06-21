@@ -71,6 +71,11 @@ let rec add_spaces =
                (classes, List.map (fun (b, o) -> (add_spaces b, o)) l)) l)
     | e -> e
 
+type node_kind =
+  | NormalResponse
+  | ErrorResponse
+  | RawResponse
+
 module type T = sig
 
   val pause : unit -> unit Lwt.t
@@ -107,8 +112,8 @@ module type T = sig
   val synchronise : 'a sinteraction -> 'a sinteraction -> unit
 
   val block_node : node block -> node
-  val print_node : ?error:bool -> node -> unit
-  val print_block : ?error:bool -> node block -> unit
+  val print_node : ?kind:node_kind -> node -> unit
+  val print_block : ?kind:node_kind -> node block -> unit
   val clear_response : unit -> unit
 
   val createNumberOutput : int -> node * (int -> unit)
@@ -123,6 +128,7 @@ module type T = sig
   val createDateInput : Date.t -> Date.t sinteraction
   val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
+  val clickableNode : node -> unit sinteraction
   val controlableNode : node -> node * (node -> unit)
   val removableNode : node -> node * (unit -> unit)
   val extendableNode : node -> node * (node -> unit)
