@@ -359,10 +359,13 @@ let createNumberOutput n =
 (** Given a DOM node, a function to set up one function called everytime that there is a change,
    a [get] function, the actual get function, a [set] function, as well as a [lock] and [unlock]
    functions, create an interaction.
-   The [actual_get] function is triggered much less frequently than the [get] function:
+    The [actual_get] function is triggered much less frequently than the [get] function:
    the [get] function is meant to access the internal value, while the [actual_get] is meant
-   to do perform a read. *)
-let createInteraction node setOnChange get actual_get set lock unlock =
+   to do perform a read.
+    By default, the function only calls the function given by [onChange] if they actually changed
+   (an additional check is performed before calling them).  To disable this, send a [smartTrigger]
+   argument to [false]. *)
+let createInteraction ?smartTrigger:(smartTrigger=true) node setOnChange get actual_get set lock unlock =
   let l = ref [] in
   let locked = ref false in
   let onLock = ref [] in
@@ -370,7 +373,7 @@ let createInteraction node setOnChange get actual_get set lock unlock =
   let current = ref (get ()) in
   let trigger _ =
     let v = get () in
-    if v <> !current then (
+    if (not smartTrigger) || v <> !current then (
       current := v ;
       List.iter (fun f -> f v) !l
     ) in
@@ -710,7 +713,7 @@ let clickableNode n =
   let unlock _ = n##.classList##remove (Js.string "locked") in
   let setOnChange f =
     div##.onclick := Dom_html.handler (fun _ -> f () ; Js._false) in
-  createInteraction div setOnChange get get set lock unlock
+  createInteraction ~smartTrigger:false div setOnChange get get set lock unlock
 
 let controlableNode n =
   let div = Dom_html.createDiv document in
