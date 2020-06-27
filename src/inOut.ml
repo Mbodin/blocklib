@@ -11,6 +11,7 @@ type layout =
   | Normal
   | Centered
   | Inlined
+  | Navigation
 
 type cell_option = {
     row : int ;
@@ -30,6 +31,7 @@ type 'node block =
   | List of bool * 'node block list
   | Space
   | Text of string
+  | Span of css_class list * string
   | FoldableBlock of bool * string * 'node block
   | LinkExtern of link * string * string
   | LinkContinuation of bool * link * string * (unit -> unit)
@@ -46,6 +48,7 @@ let rec add_spaces =
     | List _ -> false
     | Space -> false
     | Text _ -> true
+    | Span _ -> true
     | FoldableBlock _ -> true
     | LinkExtern _ -> true
     | LinkContinuation _ -> true
@@ -133,6 +136,8 @@ module type T = sig
   val removableNode : node -> node * (unit -> unit)
   val extendableNode : node -> node * (node -> unit)
   val extendableList : unit -> node * (node -> unit -> unit)
+
+  val addClass : css_class list -> node -> node
 
 end
 

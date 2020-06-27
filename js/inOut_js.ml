@@ -37,8 +37,10 @@ let setLoading p =
 
 let log msg = Firebug.console##log (Js.string msg)
 
+let document = Dom_html.window##.document
+
 let get_body _ =
-  let l = Dom_html.document##getElementsByTagName (Js.string "body") in
+  let l = document##getElementsByTagName (Js.string "body") in
   if l##.length = 0 then
     failwith "No [body] element found in the webpage." ;
   if l##.length > 1 then
@@ -180,8 +182,6 @@ let synchronise i1 i2 =
   i1.onLockChange (lockMatch i2) ;
   i2.onLockChange (lockMatch i1)
 
-let document = Dom_html.window##.document
-
 (** Return a list of CSS classes corresponding to the style of a button. *)
 let link_to_class = function
   | InOut.Simple -> []
@@ -200,11 +200,15 @@ let rec block_node =
     List.iter (fun b -> Dom.appendChild e (f (block_node b))) in
   function
   | InOut.Div (layout, classes, l) ->
-    let div = Dom_html.createDiv document in
+    let div =
+      match layout with
+      | InOut.Navigation ->
+        document##createElement (Js.string "nav")
+      | _ -> Dom_html.createDiv document in
     apply_classes div classes ;
     let _ =
       match layout with
-      | InOut.Normal -> ()
+      | InOut.Normal | InOut.Navigation -> ()
       | InOut.Centered ->
         div##.className := Js.string "center"
       | InOut.Inlined ->
@@ -228,7 +232,10 @@ let rec block_node =
     span##.classList##add (Js.string "space") ;
     (span :> Dom_html.element Js.t)
   | InOut.Text text ->
+    block_node (InOut.Span ([], text))
+  | InOut.Span (classes, text) ->
     let span = Dom_html.createSpan document in
+    apply_classes span classes ;
     Dom.appendChild span (Dom_html.document##createTextNode (Js.string text)) ;
     (span :> Dom_html.element Js.t)
   | InOut.FoldableBlock (visible, title, node) ->
@@ -747,4 +754,8 @@ let extendableList _ =
     Dom.appendChild l i ;
     fun _ -> Dom.removeChild l i in
   (l, add)
+
+let addClass c n =
+  apply_classes n c ;
+  n
 

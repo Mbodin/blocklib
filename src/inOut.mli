@@ -18,6 +18,7 @@ type layout =
   | Normal (** No special layout. *)
   | Centered (** Its content is centered. *)
   | Inlined (** The block is inlined. *)
+  | Navigation (** A block for navigation items. *)
 
 (** Specific options for cells in tables. *)
 type cell_option = {
@@ -42,6 +43,7 @@ type 'node block =
          The boolean indicates whether bullets should be drawn. *)
   | Space (** Some space between texts. *)
   | Text of string (** A simple text. *)
+  | Span of css_class list * string (** A text with some additional classes. *)
   | FoldableBlock of bool * string * 'node block
       (** A title that can hide a node.
          The boolean states whether the block should be unfolded by default. *)
@@ -215,6 +217,9 @@ module type T = sig
   (** Create an empty list, which can be extended by new elements by calling the returned function.
      This function in turn returns a function to remove each added item. *)
   val extendableList : unit -> node * (node -> unit -> unit)
+
+  (** Apply CSS classes to a node. *)
+  val addClass : css_class list -> node -> node
 
 end
 
