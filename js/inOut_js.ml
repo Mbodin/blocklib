@@ -496,7 +496,7 @@ let synchroniseListInput i1 i2 =
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in
-  main##.classList##add (Js.string "autocomplete") ;
+  apply_classes main ["autocomplete"] ;
   let l = ref default in
   let remove txt =
     l := List.filter (fun (txt', _) -> txt <> txt') !l in
@@ -524,7 +524,7 @@ let createResponsiveListInput default placeholder get =
   input##.placeholder := Js.string placeholder ;
   Dom.appendChild form input ;
   let div = Dom_html.createDiv document in
-  div##.classList##add (Js.string "autocomplete-items") ;
+  apply_classes div ["autocomplete-items"] ;
   Dom.appendChild form div ;
   let close_all_list _ =
     let l = document##getElementsByClassName (Js.string "autocomplete-items") in
@@ -712,7 +712,7 @@ let createFileImport extensions prepare =
 
 let clickableNode n =
   let div = Dom_html.createDiv document in
-  div##.className := Js.string "clickable" ;
+  apply_classes div ["clickable"; "wrapper"] ;
   Dom.appendChild div n ;
   let get _ = () in
   let set _ = () in
@@ -724,6 +724,7 @@ let clickableNode n =
 
 let controlableNode n =
   let div = Dom_html.createDiv document in
+  apply_classes div ["wrapper"] ;
   let update n =
     clear_node div ;
     Dom.appendChild div n in
@@ -732,6 +733,7 @@ let controlableNode n =
 
 let extendableNode n =
   let div = Dom_html.createDiv document in
+  apply_classes div ["wrapper"] ;
   let add n =
     Dom.appendChild div n in
   add n ;
@@ -739,6 +741,7 @@ let extendableNode n =
 
 let removableNode n =
   let div = Dom_html.createDiv document in
+  apply_classes div ["wrapper"] ;
   Dom.appendChild div n ;
   let remove _ =
     match Js.Opt.to_option div##.parentNode with
