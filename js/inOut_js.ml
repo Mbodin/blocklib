@@ -372,7 +372,7 @@ let createNumberOutput n =
     By default, the function only calls the function given by [onChange] if they actually changed
    (an additional check is performed before calling them).  To disable this, send a [smartTrigger]
    argument to [false]. *)
-let createInteraction ?smartTrigger:(smartTrigger=true) node setOnChange get actual_get set lock unlock =
+let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set lock unlock =
   let l = ref [] in
   let locked = ref false in
   let onLock = ref [] in
