@@ -38,8 +38,8 @@ val default : cell_option
 type 'node block =
   | Div of layout * css_class list * 'node block list (** A div node, with its layout. *)
   | P of 'node block list (** A paragraph node. *)
-  | List of bool * 'node block list
-      (** A list of items.
+  | List of bool * 'node block list list
+      (** A list of items, each composed of several blocks.
          The boolean indicates whether bullets should be drawn. *)
   | Space (** Some space between texts. *)
   | Text of string (** A simple text. *)
@@ -54,9 +54,9 @@ type 'node block =
          The boolean indicates whether the arrow is forwards. *)
   | LinkFile of link * string * string * string * bool * (unit -> string)
       (** Creates a link to a file whose content is computed.
-         The first argument is the link text, the second the file name,
-         the third the mime type, and the fifth its content.
-         The fourth indicates whether newlines should be adapted to the
+         The first string argument is the link text, the second the file name,
+         the third the mime type, and the fourth its content.
+         The boolean indicates whether newlines should be adapted to the
          host’s operating system or not. *)
   | Table of string list
              * ('node block * cell_option) list

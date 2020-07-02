@@ -28,7 +28,7 @@ let default = {
 type 'node block =
   | Div of layout * css_class list * 'node block list
   | P of 'node block list
-  | List of bool * 'node block list
+  | List of bool * 'node block list list
   | Space
   | Text of string
   | Span of css_class list * string
@@ -65,7 +65,7 @@ let rec add_spaces =
   let aux l = aux (List.map add_spaces l) in function
     | Div (layout, classes, l) -> Div (layout, classes, aux l)
     | P l -> P (aux l)
-    | List (visible, l) -> List (visible, List.map add_spaces l)
+    | List (visible, l) -> List (visible, List.map aux l)
     | FoldableBlock (show, title, b) ->
       FoldableBlock (show, title, add_spaces b)
     | Table (classes, h, l) ->

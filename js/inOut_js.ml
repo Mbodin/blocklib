@@ -222,10 +222,10 @@ let rec block_node =
   | InOut.List (visible, l) ->
     let ul = Dom_html.createUl document in
     ul##.className := Js.string (if visible then "bullet" else "bulletless") ;
-    appendChilds (fun n ->
+    List.iter (fun n ->
       let li = Dom_html.createLi document in
-      Dom.appendChild li n ;
-      li) ul l ;
+      appendChilds Utils.id li n ;
+      Dom.appendChild ul li) l ;
     (ul :> Dom_html.element Js.t)
   | InOut.Space ->
     let span = Dom_html.createSpan document in
