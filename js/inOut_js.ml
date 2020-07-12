@@ -412,11 +412,11 @@ let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set
 
 (** Given a DOM node, an input [input], an internal [get] function, the actual get function,
    a [set] function, and a [lock] and [unlock] functions, create an interaction.
-   The triggerring of the [onChange] functions are dealt automatically using the [onchange]
+   The triggerring of the [onChange] functions are dealt automatically using the [oninput]
    property of the input. . *)
 let createInteractionInput node input =
   let setOnChange f =
-    input##.onchange := Dom_html.handler (fun _ -> f () ; Js._false) in
+    input##.oninput := Dom_html.handler (fun _ -> f () ; Js._false) in
   createInteraction node setOnChange
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput].
