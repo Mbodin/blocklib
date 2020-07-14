@@ -1,7 +1,6 @@
 (** Module InOut_native
    An implementation of [InOut.T] for native programs. *)
 
-open Murder_generator
 open Libutils
 
 (** Length of utf-8-encoded string. *)
