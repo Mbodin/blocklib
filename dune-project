@@ -10,5 +10,3 @@
 
 (explicit_js_mode)
 
-(using menhir 2.0)
-

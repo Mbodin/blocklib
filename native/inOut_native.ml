@@ -486,15 +486,19 @@ let link f =
   links := !links @ [f] ;
   "[" ^ string_of_int n ^ "]"
 
-(** Ask for a number from the user. *)
-let numberInput get set =
-  print_string (string_of_int (get ()) ^ " -> ") ;
+(** Ask for a value from the user given a printer and reader value. *)
+let valueInput print read get set =
+  print_string (print (get ()) ^ " -> ") ;
   flush stdout ;
   let str = input_line stdin in
   let v =
-    try int_of_string str
+    try read str
     with _ -> print_endline "Invalid value."; get () in
   set v
+
+(** Ask for a number from the user. *)
+let numberInput =
+  valueInput string_of_int int_of_string
 
 (** Clear the registered links. *)
 let clear_links _ =
@@ -554,6 +558,27 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
       numberInput (fun _ -> !v) (fun v' -> v := v') ;
       v := max mi (min !v ma))) in
   let set n = v := (max mi (min ma n)) in
+  create node get set
+
+let createFloatInput ?min:mi ?max:ma f =
+  let normalise f =
+    let f =
+      match mi with
+      | None -> f
+      | Some mi -> max mi f in
+    let f =
+      match ma with
+      | None -> f
+      | Some ma -> min ma f in
+    f in
+  let v = ref (normalise f) in
+  let get _ = !v in 
+  let (menu, create) = createMenu get in
+  let node link =
+    Print.print (" " ^ Float.to_string !v ^ " " ^ menu link (fun _ ->
+      valueInput Float.to_string Float.of_string (fun _ -> !v) (fun v' -> v := v') ;
+      v := normalise !v)) in
+  let set f = v := normalise f in
   create node get set
 
 let createTextInput str =
@@ -744,4 +769,6 @@ let controlableNode n =
   let r = ref n in
   let node link = !r link in
   (node, fun n -> r := n)
+
+let addClass _classes n = n
 

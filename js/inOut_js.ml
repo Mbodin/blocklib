@@ -363,6 +363,10 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
+let createFloatOutput n =
+  let (node, set) = createTextOutput (Printf.sprintf "%f" n) in
+  (node, fun n -> set (Printf.sprintf "%f" n))
+
 (** Given a DOM node, a function to set up one function called everytime that there is a change,
    a [get] function, the actual get function, a [set] function, as well as a [lock] and [unlock]
    functions, create an interaction.
@@ -436,6 +440,31 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
     input##.value := Js.string (string_of_int d) in
   set d ;
   let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in
+  createInputInteraction input get get set
+
+let createFloatInput ?min:mi ?max:ma f =
+  let input = Dom_html.createInput ~_type:(Js.string "number") document in
+  ignore (input##setAttribute (Js.string "step") (Js.string "any")) ;
+  let set_field field = function
+    | None -> ()
+    | Some v ->
+      ignore (input##setAttribute (Js.string field) (Js.string (Printf.sprintf "%f" v))) in
+  set_field "min" mi ;
+  set_field "max" ma ;
+  let normalise f =
+    let f =
+      match mi with
+      | None -> f
+      | Some mi -> max mi f in
+    let f =
+      match ma with
+      | None -> f
+      | Some ma -> min ma f in
+    f in
+  let set f =
+    input##.value := Js.string (Printf.sprintf "%f" (normalise f)) in
+  set f ;
+  let get _ = normalise (Float.of_string (Js.to_string input##.value)) in
   createInputInteraction input get get set
 
 let createTextInput txt =
