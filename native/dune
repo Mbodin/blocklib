@@ -1,6 +1,6 @@
-(executable
-	(public_name blocklib)
-  (name main_native)
+(library
+	(public_name blocklib.native)
+  (name blocklib_native)
 	(libraries blocklib uuseg.string lwt.unix)
 	(preprocess (pps lwt_ppx))
 	(modes native))

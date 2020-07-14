@@ -2,10 +2,7 @@
 (library
 	(public_name blocklib)
 	(name blocklib)
-	(libraries libutils unix extlib yojson re uutf lwt ocamlgraph)
-	(preprocess (pps lwt_ppx ppx_deriving ppx_inline_test))
-	(inline_tests)
+	(libraries libutils re lwt)
+	(preprocess (pps lwt_ppx))
 	(modes byte native))
-
-(env (dev (flags (:standard -w -50))))
 

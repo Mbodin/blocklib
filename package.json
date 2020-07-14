@@ -8,33 +8,20 @@
 		"buildsInSource": "_build"
 	},
 	"scripts": {
-		"clean": "rm -R _build web/main.js web/doc",
 		"test": "dune runtest",
-		"run": "_build/install/default/bin/blocklib",
-		"doc": "dune build @doc",
-		"server": "./server.sh run"
+		"doc": "dune build @doc"
 	},
 	"dependencies": {
-		"@opam/dune": ">=2.0",
-		"@opam/extlib": "~1.7",
-		"@opam/menhir": "*",
-		"@opam/yojson": "*",
+		"@opam/dune": "2.3.1",
 		"@opam/re": "*",
-		"@opam/uutf": "*",
 		"@opam/uuseg": "*",
-		"@opam/ppx_deriving": "*",
 		"@opam/lwt_ppx": "*",
-		"@opam/js_of_ocaml": "3.5.1",
+		"@opam/js_of_ocaml": "3.5.2",
 		"@opam/js_of_ocaml-lwt": "*",
 		"@opam/js_of_ocaml-ppx": "*",
 		"@opam/js_of_ocaml-ppx_deriving_json": "*",
-		"@opam/ocamlgraph": "*",
 		"@opam/odoc": "*",
-		"@opam/ppx_inline_test": "*",
 		"ocaml": "~4.7",
-		"libutils": "*"
-	},
-	"resolutions": {
 		"libutils": "github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd"
 	}
 }
