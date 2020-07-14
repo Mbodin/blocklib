@@ -354,14 +354,13 @@ let createMenu get =
        onLockChange = onLockChange
      })
 
-let rec block_node b =
-  match b with
-  | InOut.Div (layout, l) ->
+let rec block_node = function
+  | InOut.Div (layout, _classes, l) ->
     let l = List.map block_node l in fun link ->
     if layout <> Inlined then Print.clearline () ;
     let pop =
       match layout with
-      | InOut.Normal ->
+      | InOut.Normal | InOut.Navigation ->
         Print.push_prefix " " ;
         fun _ ->
           Print.pop () ;
@@ -385,17 +384,17 @@ let rec block_node b =
     Print.pop () ;
     Print.clearline () ;
   | InOut.List (drawn, l) ->
-    let l = List.map block_node l in fun link ->
-    List.iter (fun b ->
+    let l = List.map (List.map block_node) l in fun link ->
+    List.iter (fun bl ->
       if drawn then (
         Print.clearline () ;
         Print.print "* " ;
         Print.push_prefix "  " ;
-        b link ;
+        List.iter (fun b -> b link) bl ;
         Print.pop ()
       ) else (
         Print.clearline () ;
-        b link
+        List.iter (fun b -> b link) bl
       )) l
   | InOut.Space -> fun _link ->
     Print.breakpoint ~normal:"  " ()
@@ -405,6 +404,8 @@ let rec block_node b =
     List.iteri (fun i str ->
       if i <> 0 then Print.space () ;
       Print.print str) (String.split_on_char ' ' str)
+  | InOut.Span (_classes, text) ->
+    block_node (InOut.Text text)
   | InOut.FoldableBlock (visible, title, node) ->
     let visible = ref visible in
     let node = block_node node in fun link ->
