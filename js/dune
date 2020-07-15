@@ -1,7 +1,8 @@
+
 (library
-	(public_name blocklib.js)
-	(name blocklib_js)
-	(libraries blocklib js_of_ocaml-lwt)
-	(preprocess (pps lwt_ppx js_of_ocaml-ppx))
-	(modes byte))
+  (public_name blocklib.js)
+  (name blocklib_js)
+  (libraries blocklib js_of_ocaml-lwt)
+  (preprocess (pps lwt_ppx js_of_ocaml-ppx))
+  (modes byte))
 

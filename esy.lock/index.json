@@ -1,5 +1,5 @@
 {
-  "checksum": "9e6285e20412174deb79bde083ae9f9b",
+  "checksum": "cb8b0877f210ce85ea2afa8fd3514285",
   "root": "blocklib@link-dev:./package.json",
   "node": {
     "ocaml@4.7.1004@d41d8cd9": {
@@ -16,16 +16,16 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "libutils@github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd@d41d8cd9": {
+    "libutils@github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd@d41d8cd9": {
       "id":
-        "libutils@github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd@d41d8cd9",
+        "libutils@github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd@d41d8cd9",
       "name": "libutils",
       "version":
-        "github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd",
+        "github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd",
       "source": {
         "type": "install",
         "source": [
-          "github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd"
+          "github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd"
         ]
       },
       "overrides": [],
@@ -48,7 +48,7 @@
       "overrides": [],
       "dependencies": [
         "ocaml@4.7.1004@d41d8cd9",
-        "libutils@github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd@d41d8cd9",
+        "libutils@github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd@d41d8cd9",
         "@opam/uuseg@opam:13.0.0@f60712a7", "@opam/re@opam:1.9.0@d4d5e13d",
         "@opam/odoc@opam:1.5.1@dae60787",
         "@opam/lwt_ppx@opam:2.0.1@ab0debb8",
