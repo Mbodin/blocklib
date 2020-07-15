@@ -315,8 +315,11 @@ let synchronise i1 i2 =
 
 (** Creates a menu and an interaction-creating function.
    The menu is a wrapper around link to call the functions given to [onChange] each time
-   the link is activated before calling the corresponding function. *)
-let createMenu get =
+   the link is activated before calling the corresponding function.
+    By default, the function only calls the function given by [onChange] if they actually changed
+   (an additional check is performed before calling them).  To disable this, send a [smartTrigger]
+   argument to [false]. *)
+let createMenu ?(smartTrigger = true) get =
   let l = ref [] in
   let onChange f = l := f :: !l in
   let locked = ref false in
@@ -325,7 +328,7 @@ let createMenu get =
   let current = ref (get ()) in
   let trigger _ =
     let v = get () in
-    if v <> !current then (
+    if (not smartTrigger) || v <> !current then (
       current := v ;
       List.iter (fun f -> f v) !l
     ) in
@@ -530,15 +533,20 @@ let _ =
         aux () in
   aux ()
 
-let print_node ?(error = false) n =
-  let symbol = if error then '!' else '-' in
+let print_node ?(kind = InOut.NormalResponse) n =
+  let symbol =
+    match kind with
+    | InOut.NormalResponse -> "-"
+    | InOut.ErrorResponse -> "!"
+    | InOut.RawResponse -> "" in
   let header _ =
     Print.clearline () ;
-    Print.separator symbol in
+    if String.length symbol > 0 then
+      Print.separator symbol.[0] in
   let n link =
     header () ;
-    Print.push_prefix (String.make 1 symbol ^ " ") ;
-    Print.push_suffix (String.make 1 symbol) ;
+    Print.push_prefix (if symbol = "" then "" else (symbol ^ " ")) ;
+    Print.push_suffix symbol ;
     n link ;
     Print.pop () ;
     Print.pop () ;
@@ -546,8 +554,8 @@ let print_node ?(error = false) n =
   registered_nodes := BidirectionalList.add_right !registered_nodes n ;
   n link
 
-let print_block ?(error = false) =
-  Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
+let print_block ?(kind = InOut.NormalResponse) =
+  Utils.compose (print_node ~kind) (Utils.compose block_node InOut.add_spaces)
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
   let v = ref (max mi (min ma n)) in
@@ -765,10 +773,59 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
+let createFloatOutput f =
+  let (node, set) = createTextOutput (Float.to_string f) in
+  (node, fun f -> set (Float.to_string f))
+
 let controlableNode n =
   let r = ref n in
   let node link = !r link in
   (node, fun n -> r := n)
+
+let removableNode n =
+  let (node, update) = controlableNode n in
+  let remove _ = update (fun _link -> ()) in
+  (node, remove)
+
+let clickableNode n =
+  let const _ = () in
+  let (menu, create) = createMenu ~smartTrigger:false const in
+  let trigger = ref const in
+  let node link =
+    n link ;
+    Print.print (" " ^ menu link (fun _ -> !trigger ())) in
+  let node = create node const const in
+  trigger := node.set ;
+  node
+
+let extendableNode n =
+  let l = ref [n] in
+  let (node, set) = controlableNode n in
+  let add n =
+    l := !l @ [n] ;
+    set (fun link ->
+      List.iteri (fun i n ->
+        if i <> 0 then Print.breakpoint () ;
+        n link) !l) in
+  (node, add)
+
+let extendableList _ =
+  let l = ref [] in
+  let ids = Id.new_id_function () in
+  let (node, set) = controlableNode (fun _link -> ()) in
+  let add n =
+    let id = ids () in
+    l := !l @ [(id, n)] ;
+    set (fun link ->
+      List.iter (fun (_id, n) ->
+        Print.clearline () ;
+        Print.print "* " ;
+        Print.push_prefix "  " ;
+        n link ;
+        Print.pop ()) !l) ;
+    fun _ ->
+      l := List.remove_assoc id !l in
+  (node, add)
 
 let addClass _classes n = n
 

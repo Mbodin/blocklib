@@ -217,7 +217,8 @@ module type T = sig
   (** Create a node that can be removed by calling the returned function. *)
   val removableNode : node -> node * (unit -> unit)
 
-  (** Create a node that can be extended by calling the returned function. *)
+  (** Create a node that can be extended by calling the returned function: the given node
+     will be added at the end of the current one. *)
   val extendableNode : node -> node * (node -> unit)
 
   (** Create an empty list, which can be extended by new elements by calling the returned function.

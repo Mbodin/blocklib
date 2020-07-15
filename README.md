@@ -5,6 +5,9 @@ It features [a common interface](src/inOut.mli), and two implementations:
 - [a JavaScript one](js/),
 - [a terminal one](native/).
 
+Note that Blocklib is a very common library name: do double-check that this is indeed the library that you need.
+It was named as-is because its main display unit is associated to the `block` type (nothing related to block-chain or this kind of thing).
+
 To use the library, define a module parameterised by an `InOut.T` submodule, as-is:
 ```ocaml
 module Main (IO : InOut.T) = struct

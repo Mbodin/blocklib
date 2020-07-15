@@ -377,6 +377,8 @@ let createFloatOutput n =
    (an additional check is performed before calling them).  To disable this, send a [smartTrigger]
    argument to [false]. *)
 let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set lock unlock =
+  let set x =
+    if (not smartTrigger) || x <> get () then set x in
   let l = ref [] in
   let locked = ref false in
   let onLock = ref [] in
@@ -420,7 +422,8 @@ let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set
    property of the input. . *)
 let createInteractionInput node input =
   let setOnChange f =
-    input##.oninput := Dom_html.handler (fun _ -> f () ; Js._false) in
+    input##.oninput := Dom_html.handler (fun _ -> f () ; Js._false) ;
+    input##.onchange := Dom_html.handler (fun _ -> f () ; Js._false) in
   createInteraction node setOnChange
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput].
