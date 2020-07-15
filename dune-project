@@ -1,5 +1,9 @@
 (lang dune 2.0)
 
+(name blocklib)
+(generate_opam_files true)
+(license AGPLv3)
+
 (package
   (name blocklib)
   (synopsis "A basic interface library")
