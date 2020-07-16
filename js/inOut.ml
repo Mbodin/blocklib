@@ -170,6 +170,22 @@ type ('a, 'b) interaction = {
 
 type 'a sinteraction = ('a, 'a) interaction
 
+(** Interactions make heavy use of [oninput] and [onchange].
+   This might produce chain reactions if a block is nested in another.
+   This is not meant to happen: bubbling does not happen in the text output.
+   We could just prevent bubbling, but this is bad practice.
+   Instead, we add a special marker to events that are not meant to be executed twice.
+   This wrapper does this: given a function and an event, mark the event, then only execute
+   the function if the event was previously unmarked. *)
+let prevent_bubbling_wrapper f ev =
+  let ev = Js.Unsafe.coerce ev in
+  match Js.Optdef.to_option ev##.prevent_bubbling_mark_blocklib with
+  | Some _ -> Js._false (* The event was already used. *)
+  | None ->
+    ev##.prevent_bubbling_mark_blocklib := Js.Optdef.return Js._true ;
+    f () ;
+    Js._false
+
 (** Similar to [lock] and [unlock], but from a boolean. *)
 let lockMatch n = function
   | true -> n.lock ()
@@ -422,8 +438,8 @@ let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set
    property of the input. . *)
 let createInteractionInput node input =
   let setOnChange f =
-    input##.oninput := Dom_html.handler (fun _ -> f () ; Js._false) ;
-    input##.onchange := Dom_html.handler (fun _ -> f () ; Js._false) in
+    input##.oninput := Dom_html.handler (prevent_bubbling_wrapper f) ;
+    input##.onchange := Dom_html.handler (prevent_bubbling_wrapper f) in
   createInteraction node setOnChange
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput].
@@ -542,10 +558,9 @@ let createResponsiveListInput default placeholder get =
       Dom.appendChild li (block_node (InOut.Text str)) ;
       let close = Dom_html.createButton document in
       close##.onclick :=
-        Dom_html.handler (fun _ ->
+        Dom_html.handler (prevent_bubbling_wrapper (fun _ ->
           remove str ;
-          update_list () ;
-          Js._true) ;
+          update_list ())) ;
       close##.classList##add (Js.string "autocomplete-close") ;
       Dom.appendChild li close) !l in
   update_list () ;
@@ -585,22 +600,18 @@ let createResponsiveListInput default placeholder get =
           input##.value := Js.string "" ;
           add str v in
         item##.onmousedown :=
-          Dom_html.handler (fun _ ->
-            apply () ;
-            Js._true) ;
+          Dom_html.handler (prevent_bubbling_wrapper apply) ;
         Dom.appendChild item (block_node (InOut.Text str)) ;
         (item, apply)) (get (Js.to_string input##.value)) in
     List.iter (Dom.appendChild div) (List.rev_map fst autocompletions) ;
     autocompletions in
   input##.oninput :=
-    Dom_html.handler (fun _ ->
+    Dom_html.handler (prevent_bubbling_wrapper (fun _ ->
       current_focus := None ;
-      ignore (create_autocompletions ()) ;
-      Js._true) ;
+      ignore (create_autocompletions ()))) ;
   input##.onfocus :=
-    Dom_html.handler (fun _ ->
-      ignore (create_autocompletions ()) ;
-      Js._true) ;
+    Dom_html.handler (prevent_bubbling_wrapper (fun _ ->
+      ignore (create_autocompletions ()))) ;
   input##.onblur :=
     Dom_html.handler (fun _ ->
       Lwt.async (fun _ ->
@@ -729,13 +740,12 @@ let createFileImport extensions prepare =
           | Some f ->
             let reader = new%js Js_of_ocaml.File.fileReader in
             let (cont, w) = Lwt.task () in
-            reader##.onload := Dom.handler (fun _ ->
+            reader##.onload := Dom.handler (prevent_bubbling_wrapper (fun _ ->
               let str =
                 Js.to_string (Utils.assert_option __LOC__
                   (Js.Opt.to_option (File.CoerceTo.string (reader##.result)))) in
               Lwt.wakeup_later w (fun _ ->
-                aux ((Js.to_string f##.name, str) :: l) (n + 1)) ;
-              Js._true) ;
+                aux ((Js.to_string f##.name, str) :: l) (n + 1)))) ;
             reader##readAsText f ;
             let%lwt cont = cont in cont () in
       let%lwt l = aux [] 0 in
@@ -751,7 +761,7 @@ let clickableNode n =
   let lock _ = n##.classList##add (Js.string "locked") in
   let unlock _ = n##.classList##remove (Js.string "locked") in
   let setOnChange f =
-    div##.onclick := Dom_html.handler (fun _ -> f () ; Js._false) in
+    div##.onclick := Dom_html.handler (prevent_bubbling_wrapper f) in
   createInteraction ~smartTrigger:false div setOnChange get get set lock unlock
 
 let controlableNode n =
