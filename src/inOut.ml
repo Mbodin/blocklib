@@ -119,12 +119,14 @@ module type T = sig
   val print_block : ?kind:node_kind -> node block -> unit
   val clear_response : unit -> unit
 
-  val createNumberOutput : int -> node * (int -> unit)
+  val createIntegerOutput : int -> node * (int -> unit)
   val createFloatOutput : float -> node * (float -> unit)
   val createTextOutput : string -> node * (string -> unit)
 
-  val createNumberInput : ?min:int -> ?max:int -> int -> int sinteraction
+  val createIntegerInput : ?min:int -> ?max:int -> int -> int sinteraction
+  val createControlableIntegerInput : int -> int sinteraction * (int -> unit) * (int -> unit)
   val createFloatInput : ?min:float -> ?max:float -> float -> float sinteraction
+  val createControlableFloatInput : float -> float sinteraction * (float -> unit) * (float -> unit)
   val createTextInput : string -> string sinteraction
   val createListInput : (string * 'a) list -> (string, (string * 'a) option) interaction
   val synchroniseListInput : (string, (string * 'a) option) interaction -> (string, (string * 'a) option) interaction -> unit

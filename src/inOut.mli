@@ -151,7 +151,7 @@ module type T = sig
 
 
   (** Create a text output as a number which can be later reset. *)
-  val createNumberOutput : int -> node * (int -> unit)
+  val createIntegerOutput : int -> node * (int -> unit)
 
   (** Create a text output as a floating-point number which can be later reset. *)
   val createFloatOutput : float -> node * (float -> unit)
@@ -161,10 +161,18 @@ module type T = sig
 
 
   (** Create a number input with default value given as argument. *)
-  val createNumberInput : ?min:int -> ?max:int -> int -> int sinteraction
+  val createIntegerInput : ?min:int -> ?max:int -> int -> int sinteraction
+
+  (** Similar to [createIntegerInput], but the [min] and [max] values can be changed after
+     the node creation with the two returned functions. *)
+  val createControlableIntegerInput : int -> int sinteraction * (int -> unit) * (int -> unit)
 
   (** Create a floating-point number input with default value given as argument. *)
   val createFloatInput : ?min:float -> ?max:float -> float -> float sinteraction
+
+  (** Similar to [createFloatInput], but the [min] and [max] values can be changed after
+     the node creation with the two returned functions. *)
+  val createControlableFloatInput : float -> float sinteraction * (float -> unit) * (float -> unit)
 
   (** Create a text input with default value given as argument. *)
   val createTextInput : string -> string sinteraction

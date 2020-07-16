@@ -13,7 +13,7 @@
 		"doc": "dune build @doc"
 	},
 	"dependencies": {
-		"@opam/dune": "~2.3",
+		"@opam/dune": ">=2.3 <2.5",
 		"@opam/re": "*",
 		"@opam/uuseg": "*",
 		"@opam/lwt_ppx": "*",
@@ -22,7 +22,7 @@
 		"@opam/js_of_ocaml-ppx": "*",
 		"@opam/js_of_ocaml-ppx_deriving_json": "*",
 		"@opam/odoc": "*",
-		"ocaml": "~4.7",
-		"libutils": "github:Mbodin/libutils#85dab5793de35a2524500f31eb85d66a665af2cd"
+		"ocaml": ">=4.8",
+		"libutils": "github:Mbodin/libutils#9e788308249b1e7477ebe86f742163603ab9b0ce"
 	}
 }

@@ -375,7 +375,7 @@ let createTextOutput txt =
   add txt ;
   ((span :> Dom_html.element Js.t), fun txt -> clear_node span ; add txt)
 
-let createNumberOutput n =
+let createIntegerOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
@@ -450,33 +450,58 @@ let createInputInteraction (node : Dom_html.inputElement Js.t) get actual_get se
   let unlock _ = setLock false in
   createInteractionInput node node get actual_get set lock unlock
 
-let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
+let createControlableIntegerInput d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
-  ignore (input##setAttribute (Js.string "min") (Js.string (string_of_int mi))) ;
-  ignore (input##setAttribute (Js.string "max") (Js.string (string_of_int ma))) ;
+  let set_value field r = fun v ->
+    r := v ;
+    ignore (input##setAttribute (Js.string field) (Js.string (string_of_int v))) in
+  let mi = ref min_int in
+  let ma = ref max_int in
   let set d =
-    let d = min ma (max mi d) in
+    let d = min !ma (max !mi d) in
     input##.value := Js.string (string_of_int d) in
   set d ;
-  let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in
-  createInputInteraction input get get set
+  let get _ =
+    let v =
+      try int_of_string (Js.to_string input##.value)
+      with _ -> failwith "Unexpected input in [createIntegerInput]." in
+    min !ma (max !mi v) in
+  let set_min mi' =
+    let v = get () in
+    let mi' = min mi' !ma in
+    if v <= mi' then set mi' ;
+    set_value "min" mi mi' in
+  let set_max ma' =
+    let v = get () in
+    let ma' = max ma' !mi in
+    if v >= ma' then set ma' ;
+    set_value "max" ma ma' in
+  (createInputInteraction input get get set, set_min, set_max)
 
-let createFloatInput ?min:mi ?max:ma f =
+let createIntegerInput ?min:(mi = 0) ?max:(ma = max_int) d =
+  let (interaction, set_min, set_max) = createControlableIntegerInput d in
+  set_min mi ;
+  set_max ma ;
+  interaction
+
+let createControlableFloatInput f =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
   ignore (input##setAttribute (Js.string "step") (Js.string "any")) ;
-  let set_field field = function
+  let set_field field r = fun v ->
+    r := v ;
+    match v with
     | None -> ()
     | Some v ->
       ignore (input##setAttribute (Js.string field) (Js.string (Printf.sprintf "%f" v))) in
-  set_field "min" mi ;
-  set_field "max" ma ;
+  let mi = ref None in
+  let ma = ref None in
   let normalise f =
     let f =
-      match mi with
+      match !mi with
       | None -> f
       | Some mi -> max mi f in
     let f =
-      match ma with
+      match !ma with
       | None -> f
       | Some ma -> min ma f in
     f in
@@ -484,7 +509,29 @@ let createFloatInput ?min:mi ?max:ma f =
     input##.value := Js.string (Printf.sprintf "%f" (normalise f)) in
   set f ;
   let get _ = normalise (Float.of_string (Js.to_string input##.value)) in
-  createInputInteraction input get get set
+  let set_min mi' =
+    let v = get () in
+    let mi' =
+      match !ma with
+      | None -> mi'
+      | Some ma -> min mi' ma in
+    if v <= mi' then set mi' ;
+    set_field "min" mi (Some mi') in
+  let set_max ma' =
+    let v = get () in
+    let ma' =
+      match !mi with
+      | None -> ma'
+      | Some mi -> max ma' mi in
+    if v >= ma' then set ma' ;
+    set_field "max" ma (Some ma') in
+  (createInputInteraction input get get set, set_min, set_max)
+
+let createFloatInput ?min:mi ?max:ma f =
+  let (interaction, set_min, set_max) = createControlableFloatInput f in
+  Option.may set_min mi ;
+  Option.may set_max ma ;
+  interaction
 
 let createTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in

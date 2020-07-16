@@ -557,25 +557,43 @@ let print_node ?(kind = InOut.NormalResponse) n =
 let print_block ?(kind = InOut.NormalResponse) =
   Utils.compose (print_node ~kind) (Utils.compose block_node InOut.add_spaces)
 
-let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
-  let v = ref (max mi (min ma n)) in
+let createControlableIntegerInput n =
+  let mi = ref min_int in
+  let ma = ref max_int in
+  let v = ref (max !mi (min !ma n)) in
   let get _ = !v in 
   let (menu, create) = createMenu get in
   let node link =
     Print.print (" " ^ string_of_int !v ^ " " ^ menu link (fun _ ->
       numberInput (fun _ -> !v) (fun v' -> v := v') ;
-      v := max mi (min !v ma))) in
-  let set n = v := (max mi (min ma n)) in
-  create node get set
+      v := max !mi (min !ma !v))) in
+  let set n = v := (max !mi (min !ma n)) in
+  let set_min mi' =
+    let mi' = min mi' !ma in
+    if !v <= mi' then v := mi' ;
+    mi := mi' in
+  let set_max ma' =
+    let ma' = max ma' !mi in
+    if !v >= ma' then v := ma' ;
+    ma := ma' in
+  (create node get set, set_min, set_max)
 
-let createFloatInput ?min:mi ?max:ma f =
+let createIntegerInput ?min:(mi = 0) ?max:(ma = max_int) d =
+  let (interaction, set_min, set_max) = createControlableIntegerInput d in
+  set_min mi ;
+  set_max ma ;
+  interaction
+
+let createControlableFloatInput f =
+  let mi = ref None in
+  let ma = ref None in
   let normalise f =
     let f =
-      match mi with
+      match !mi with
       | None -> f
       | Some mi -> max mi f in
     let f =
-      match ma with
+      match !ma with
       | None -> f
       | Some ma -> min ma f in
     f in
@@ -587,7 +605,27 @@ let createFloatInput ?min:mi ?max:ma f =
       valueInput Float.to_string Float.of_string (fun _ -> !v) (fun v' -> v := v') ;
       v := normalise !v)) in
   let set f = v := normalise f in
-  create node get set
+  let set_min mi' =
+    let mi' =
+      match !ma with
+      | None -> mi'
+      | Some ma -> min mi' ma in
+    if !v <= mi' then v := mi' ;
+    mi := Some mi' in
+  let set_max ma' =
+    let ma' =
+      match !mi with
+      | None -> ma'
+      | Some mi -> max ma' mi in
+    if !v >= ma' then v := ma' ;
+    ma := Some ma' in
+  (create node get set, set_min, set_max)
+
+let createFloatInput ?min:mi ?max:ma f =
+  let (interaction, set_min, set_max) = createControlableFloatInput f in
+  Option.may set_min mi ;
+  Option.may set_max ma ;
+  interaction
 
 let createTextInput str =
   let txt = ref str in
@@ -769,7 +807,7 @@ let createTextOutput str =
   let node _link = Print.print !txt in
   (node, fun str -> txt := str)
 
-let createNumberOutput n =
+let createIntegerOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
