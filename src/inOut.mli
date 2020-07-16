@@ -38,8 +38,9 @@ val default : cell_option
 type 'node block =
   | Div of layout * css_class list * 'node block list (** A div node, with its layout. *)
   | P of 'node block list (** A paragraph node. *)
-  | List of bool * 'node block list list
-      (** A list of items, each composed of several blocks.
+  | Sequence of 'node block list (** A sequence of blocks, displayed inlined. *)
+  | List of bool * 'node block list
+      (** A list of items.
          The boolean indicates whether bullets should be drawn. *)
   | Space (** Some space between texts. *)
   | Text of string (** A simple text. *)
@@ -177,10 +178,13 @@ module type T = sig
   (** Create a text input with default value given as argument. *)
   val createTextInput : string -> string sinteraction
 
-  (** Create a drop-down list where the user can choose one of its items. *)
+  (** Create a drop-down list where the user can choose one of its items.
+     The lists are pairs of two elements: the displayed name of the element, and an element value. *)
   val createListInput : (string * 'a) list -> (string, (string * 'a) option) interaction
 
-  (** Synchronise two drop-down lists. *)
+  (** Synchronise two drop-down lists.
+     The function [synchronise] couldn’t be use in such a case because of the type of list inputs
+     (they are not safe interactions). *)
   val synchroniseListInput : (string, (string * 'a) option) interaction -> (string, (string * 'a) option) interaction -> unit
 
   (** Create a text input meant to return a list of things.

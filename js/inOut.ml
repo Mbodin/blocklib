@@ -235,12 +235,16 @@ let rec block_node =
     let p = Dom_html.createP document in
     appendChilds Utils.id p l ;
     (p :> Dom_html.element Js.t)
+  | InOut.Sequence l ->
+    let span = Dom_html.createSpan document in
+    appendChilds Utils.id span l ;
+    (span :> Dom_html.element Js.t)
   | InOut.List (visible, l) ->
     let ul = Dom_html.createUl document in
     ul##.className := Js.string (if visible then "bullet" else "bulletless") ;
     List.iter (fun n ->
       let li = Dom_html.createLi document in
-      appendChilds Utils.id li n ;
+      Dom.appendChild li (block_node n) ;
       Dom.appendChild ul li) l ;
     (ul :> Dom_html.element Js.t)
   | InOut.Space ->

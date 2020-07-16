@@ -387,18 +387,20 @@ let rec block_node = function
     List.iter (fun b -> b link) l ;
     Print.pop () ;
     Print.clearline () ;
+  | InOut.Sequence l -> fun link ->
+    List.iter (fun b -> block_node b link) l
   | InOut.List (drawn, l) ->
-    let l = List.map (List.map block_node) l in fun link ->
-    List.iter (fun bl ->
+    let l = List.map block_node l in fun link ->
+    List.iter (fun b ->
       if drawn then (
         Print.clearline () ;
         Print.print "* " ;
         Print.push_prefix "  " ;
-        List.iter (fun b -> b link) bl ;
+        b link ;
         Print.pop ()
       ) else (
         Print.clearline () ;
-        List.iter (fun b -> b link) bl
+        b link
       )) l
   | InOut.Space -> fun _link ->
     Print.breakpoint ~normal:"  " ()
