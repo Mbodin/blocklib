@@ -1,7 +1,9 @@
+
 (library
   (public_name blocklib.native)
   (name blocklib_native)
   (libraries blocklib uuseg.string lwt.unix)
-  (preprocess (pps lwt_ppx))
+  (preprocess (pps lwt_ppx ppx_inline_test))
+  (inline_tests)
   (modes native))
 

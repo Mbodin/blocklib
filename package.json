@@ -22,6 +22,7 @@
 		"@opam/js_of_ocaml-ppx": "*",
 		"@opam/js_of_ocaml-ppx_deriving_json": "*",
 		"@opam/odoc": "*",
+		"@opam/ppx_inline_test": "*",
 		"ocaml": ">=4.8",
 		"libutils": "github:Mbodin/libutils#9e788308249b1e7477ebe86f742163603ab9b0ce"
 	}

@@ -1,5 +1,5 @@
 {
-  "checksum": "57de4721fb57910dcb0c01887791acf5",
+  "checksum": "5b0e2c48886654b6f52512104adb7355",
   "root": "blocklib@link-dev:./package.json",
   "node": {
     "ocaml@4.10.0@d41d8cd9": {
@@ -50,6 +50,7 @@
         "ocaml@4.10.0@d41d8cd9",
         "libutils@github:Mbodin/libutils#9e788308249b1e7477ebe86f742163603ab9b0ce@d41d8cd9",
         "@opam/uuseg@opam:13.0.0@f60712a7", "@opam/re@opam:1.9.0@d4d5e13d",
+        "@opam/ppx_inline_test@opam:v0.13.1@dbfe49b7",
         "@opam/odoc@opam:1.5.1@dae60787",
         "@opam/lwt_ppx@opam:2.0.1@ab0debb8",
         "@opam/js_of_ocaml-ppx_deriving_json@opam:3.5.2@4e1fcc02",

@@ -3,6 +3,7 @@
   (public_name blocklib)
   (name blocklib)
   (libraries libutils re lwt)
-  (preprocess (pps lwt_ppx))
+  (preprocess (pps lwt_ppx ppx_inline_test))
+  (inline_tests)
   (modes byte native))
 

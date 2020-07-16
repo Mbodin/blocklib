@@ -379,9 +379,21 @@ let createIntegerOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
-let createFloatOutput n =
-  let (node, set) = createTextOutput (Printf.sprintf "%f" n) in
-  (node, fun n -> set (Printf.sprintf "%f" n))
+(** An alternative to [string_of_float] that I find easier to read. *)
+let print_float f =
+  let str = Printf.sprintf "%f" f in
+  if String.contains str '.' then
+    let rec aux i =
+      match str.[i] with
+      | '.' -> String.sub str 0 i
+      | '0' -> aux (i - 1)
+      | _ -> String.sub str 0 (1 + i) in
+    aux (String.length str - 1)
+  else str
+
+let createFloatOutput f =
+  let (node, set) = createTextOutput (print_float f) in
+  (node, fun f -> set (print_float f))
 
 (** Given a DOM node, a function to set up one function called everytime that there is a change,
    a [get] function, the actual get function, a [set] function, as well as a [lock] and [unlock]
@@ -439,7 +451,8 @@ let createInteraction ?(smartTrigger = true) node setOnChange get actual_get set
 let createInteractionInput node input =
   let setOnChange f =
     input##.oninput := Dom_html.handler (prevent_bubbling_wrapper f) ;
-    input##.onchange := Dom_html.handler (prevent_bubbling_wrapper f) in
+    input##.onchange := Dom_html.handler (prevent_bubbling_wrapper f) ;
+    input##.onclick := Dom_html.handler (prevent_bubbling_wrapper f) in
   createInteraction node setOnChange
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput].
@@ -492,7 +505,7 @@ let createControlableFloatInput f =
     match v with
     | None -> ()
     | Some v ->
-      ignore (input##setAttribute (Js.string field) (Js.string (Printf.sprintf "%f" v))) in
+      ignore (input##setAttribute (Js.string field) (Js.string (print_float v))) in
   let mi = ref None in
   let ma = ref None in
   let normalise f =
@@ -506,7 +519,7 @@ let createControlableFloatInput f =
       | Some ma -> min ma f in
     f in
   let set f =
-    input##.value := Js.string (Printf.sprintf "%f" (normalise f)) in
+    input##.value := Js.string (print_float (normalise f)) in
   set f ;
   let get _ = normalise (Float.of_string (Js.to_string input##.value)) in
   let set_min mi' =
