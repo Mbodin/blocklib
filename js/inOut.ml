@@ -456,7 +456,10 @@ let createInteractionInput node input =
   let setOnChange f =
     input##.oninput := Dom_html.handler (prevent_bubbling_wrapper f) ;
     input##.onchange := Dom_html.handler (prevent_bubbling_wrapper f) ;
-    input##.onclick := Dom_html.handler (prevent_bubbling_wrapper f) in
+    input##.onclick :=
+      (** For most input, this is not triggered by a change, but it will at least prevent
+         the catch of the event by any parent [clickableNode]. *)
+      Dom_html.handler (prevent_bubbling_wrapper f) in
   createInteraction node setOnChange
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput].
@@ -605,6 +608,72 @@ let synchroniseListInput i1 i2 =
   i2.onChange i1.set ;
   i1.onLockChange (lockMatch i2) ;
   i2.onLockChange (lockMatch i1)
+
+let createControlableListInput l =
+  let texts =
+    ref (List.fold_left (fun m (id, text, _) ->
+      PMap.add id text m) PMap.empty l) in
+  let update_texts id text =
+    texts := PMap.add id text !texts in
+  let l = List.map (fun (id, _, v) -> (id, v)) l in
+  let get_current_list _ =
+    Utils.list_map_filter (fun (id, v) ->
+      try let text = PMap.find id !texts in Option.map (fun text -> (id, text, v)) text
+      with Not_found -> invalid_arg "createControlableListInput: invalid identifier.") l in
+  let current = ref None in
+  let input = Dom_html.createSelect document in
+  let update_interface () =
+    clear_node input ;
+    let l = get_current_list () in
+    if l = [] then (
+      input##.disabled := Js.bool true ;
+      current := None ;
+      input##.selectedIndex := -1
+    ) else (
+      List.iteri (fun i (id, txt, _) ->
+        let i = "option_" ^ string_of_int i in
+        let o = Dom_html.createOption document in
+        o##.value := Js.string i ;
+        Dom.appendChild o (Dom_html.document##createTextNode (Js.string txt)) ;
+        Dom.appendChild input o) l ;
+      match !current with
+      | None -> ()
+      | Some id ->
+        match Utils.list_associ_opt id (List.map (fun (id, _, _) -> (id, ())) l) with
+        | Some (i, _) -> input##.selectedIndex := i
+        | None ->
+          input##.selectedIndex := -1 ;
+          current := None
+    ) in
+  update_interface () ;
+  let get _ =
+    let l = List.map (fun (_id, _text, v) -> v) (get_current_list ()) in
+    let i = input##.selectedIndex in
+    List.nth_opt l i in
+  let set = function
+    | None ->
+      current := None ;
+      input##.selectedIndex := -1
+    | Some id ->
+      let l = List.map (fun (id, _text, v) -> (id, v)) (get_current_list ()) in
+      match Utils.list_associ_opt id l with
+      | None -> invalid_arg "createControlableListInput: set on an non-existing element."
+      | Some (i, _) ->
+        current := Some id ;
+        input##.selectedIndex := i in
+  let get_stro _ =
+    let i = input##.selectedIndex in
+    if i < 0 then None
+    else Option.map fst (List.nth_opt l i) in
+  let lock _ = input##.disabled := Js.bool true in
+  let unlock _ =
+    let l = get_current_list () in
+    if l <> [] then input##.disabled := Js.bool false in
+  let i = createInteractionInput input input get_stro get set lock unlock in
+  let update id text =
+    update_texts id text ;
+    update_interface () in
+  (i, update)
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in

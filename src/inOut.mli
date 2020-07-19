@@ -196,6 +196,12 @@ module type T = sig
      the user. *)
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> (string * 'a) list sinteraction
 
+  (** Create a drop-down list similar to [createListInput], but whose text content can be controled.
+     This function returns a function able to change the display value of an item, given its
+     identifier.
+     If given [None], then the element will be hidden from the displayed list. *)
+  val createControlableListInput : ('id * string option * 'a) list -> ('id option, 'a option) interaction * ('id -> string option -> unit)
+
   (** Create a range input between [0.] and [1.]. *)
   val createPercentageInput : float -> float sinteraction
 

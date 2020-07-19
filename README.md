@@ -8,7 +8,8 @@ It features [a common interface](src/inOut.mli), and two implementations:
 Note that Blocklib is a very common library name: do double-check that this is indeed the library that you need.
 It was named as-is because its main display unit is associated to the `block` type (nothing related to block-chain or this kind of thing).
 
-To use the library, define a module parameterised by an `InOut.T` submodule, as-is:
+To use the library, define a module parameterised by an `InOut.T` submodule.
+For instance by creating a file `main.ml` as-is:
 ```ocaml
 module Main (IO : InOut.T) = struct
 
@@ -24,13 +25,16 @@ Place this module in the `src` subfolder of your repository, along with a dune f
   (libraries blocklib)
   (modes byte native))
 ```
+The main module will be declare as a library despite containing all of the program logic.
+This “library” will then be instantiated to create the wanted interface.
+You can instantiate the program for as many interface as you want.
 
 Then, to create a native output, create a `native` subfolder with the following dune file:
 ```
 (executable
   (public_name projectName)
   (name projectName_native)
-  (libraries blocklib.native projectName lwt.unix)
+  (libraries projectName blocklib.native lwt.unix)
   (preprocess (pps lwt_ppx))
   (modes native))
 ```
@@ -40,6 +44,7 @@ module Main = ProjectName.Main.Main (Blocklib_native.InOut)
 
 let _ = Lwt_main.run Main.main
 ```
+Note the nested `Main.Main`: the first `Main` corresponds to the file `src/main.ml` created above, and the nested `Main` corresponds to the `Main` parameterised module defined inside this file.
 
 To create a JavaScript output, create a `js` subfolder with the following dune file:
 ```

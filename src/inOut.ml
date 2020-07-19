@@ -134,6 +134,7 @@ module type T = sig
   val createListInput : (string * 'a) list -> (string, (string * 'a) option) interaction
   val synchroniseListInput : (string, (string * 'a) option) interaction -> (string, (string * 'a) option) interaction -> unit
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> (string * 'a) list sinteraction
+  val createControlableListInput : ('id * string option * 'a) list -> ('id option, 'a option) interaction * ('id -> string option -> unit)
   val createPercentageInput : float -> float sinteraction
   val createDateInput : Date.t -> Date.t sinteraction
   val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction

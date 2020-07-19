@@ -317,7 +317,7 @@ let synchronise i1 i2 =
 (** Creates a menu and an interaction-creating function.
    The menu is a wrapper around link to call the functions given to [onChange] each time
    the link is activated before calling the corresponding function.
-    By default, the function only calls the function given by [onChange] if they actually changed
+   By default, the function only calls the function given by [onChange] if they actually changed
    (an additional check is performed before calling them).  To disable this, send a [smartTrigger]
    argument to [false]. *)
 let createMenu ?(smartTrigger = true) get =
@@ -688,6 +688,65 @@ let synchroniseListInput i1 i2 =
   i1.onLockChange (lockMatch i2) ;
   i2.onLockChange (lockMatch i1)
 
+let createControlableListInput l =
+  let texts =
+    ref (List.fold_left (fun m (id, text, _) ->
+      PMap.add id text m) PMap.empty l) in
+  let update_texts id text =
+    texts := PMap.add id text !texts in
+  let l = List.map (fun (id, _, v) -> (id, v)) l in
+  let get_current_list _ =
+    Utils.list_map_filter (fun (id, v) ->
+      try let text = PMap.find id !texts in Option.map (fun text -> (id, text, v)) text
+      with Not_found -> invalid_arg "createControlableListInput: invalid identifier.") l in
+  let current = ref None in
+  let update id text =
+    update_texts id text ;
+    if !current = Some id && text = None then current := None in
+  let get _ =
+    match !current with
+    | None -> None
+    | Some id ->
+      let l = List.map (fun (id, _text, v) -> (id, v)) (get_current_list ()) in
+      List.assoc_opt id l in
+  let get_str _ =
+    match !current with
+    | None -> ""
+    | Some id ->
+      let l = List.map (fun (id, text, _) -> (id, text)) (get_current_list ()) in
+      match List.assoc_opt id l with
+      | Some text -> text
+      | None -> assert false in
+  let get_id _ = !current in
+  let (menu, create) = createMenu get_id in
+  let node link =
+    let txt = get_str () in
+    Print.print (" <" ^ txt ^ "> " ^ menu link (fun _ ->
+      let l = List.map (fun (id, text, _) -> (id, text)) (get_current_list ()) in
+      List.iteri (fun i (_, txt) ->
+        print_endline (string_of_int i ^ ": " ^ txt)) l ;
+      flush stdout ;
+      numberInput (fun _ ->
+        match !current with
+        | None -> -1
+        | Some id ->
+          match Utils.list_associ_opt id l with
+          | Some (i, _) -> i
+          | None -> assert false) (fun i ->
+        if i < 0 then current := None
+        else
+          match List.nth_opt l i with
+          | Some (id, _) -> current := Some id
+          | None ->
+            print_endline "Invalid choice." ;
+            current := None)) ^ " ") in
+  let set = function
+    | None -> current := None
+    | Some id ->
+      let l = List.map (fun (id, _, _) -> id) (get_current_list ()) in
+      if List.mem id l then current := Some id
+      else invalid_arg "createControlableListInput: invalid identifier." in
+  (create node get set, update)
 
 let createResponsiveListInput default _ get_possibilities =
   let l = ref default in
