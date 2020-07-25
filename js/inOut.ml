@@ -616,36 +616,57 @@ let createControlableListInput l =
   let update_texts id text =
     texts := PMap.add id text !texts in
   let l = List.map (fun (id, _, v) -> (id, v)) l in
+  let get_text id =
+    try let text = PMap.find id !texts in text
+    with Not_found -> invalid_arg "createControlableListInput: invalid identifier." in
   let get_current_list _ =
     Utils.list_map_filter (fun (id, v) ->
-      try let text = PMap.find id !texts in Option.map (fun text -> (id, text, v)) text
-      with Not_found -> invalid_arg "createControlableListInput: invalid identifier.") l in
+      let text = get_text id in
+      Option.map (fun text -> (id, text, v)) text) l in
   let current = ref None in
   let input = Dom_html.createSelect document in
-  let update_interface () =
-    clear_node input ;
-    let l = get_current_list () in
-    if l = [] then (
-      input##.disabled := Js.bool true ;
-      current := None ;
-      input##.selectedIndex := -1
-    ) else (
-      List.iteri (fun i (id, txt, _) ->
-        let i = "option_" ^ string_of_int i in
-        let o = Dom_html.createOption document in
-        o##.value := Js.string i ;
-        Dom.appendChild o (Dom_html.document##createTextNode (Js.string txt)) ;
-        Dom.appendChild input o) l ;
-      match !current with
-      | None -> ()
-      | Some id ->
-        match Utils.list_associ_opt id (List.map (fun (id, _, _) -> (id, ())) l) with
-        | Some (i, _) -> input##.selectedIndex := i
-        | None ->
-          input##.selectedIndex := -1 ;
-          current := None
-    ) in
+  let update_interface =
+    let nodes = ref (List.map (fun _ -> None) l) in fun () ->
+      let (nodes', after) =
+        List.fold_left2 (fun (nodes, after) node (id, _) ->
+          let node' =
+            let text = get_text id in
+            Option.map (fun text ->
+              let node = Dom_html.createOption document in
+              Dom.appendChild node (Dom_html.document##createTextNode (Js.string text)) ;
+              (text, (node :> Dom.node Js.t))) text in
+          let (after, node) =
+            match node, node' with
+            | None, None ->
+              (** The node is absent, and meant to be. *)
+              (after, None)
+            | Some (str1, n), Some (str2, _) when str1 = str2 ->
+              (** Nothing is meant to be changed. *)
+              (Some n, Some (str1, n))
+            | Some (_, n), None ->
+              (** The node is meant to be removed. *)
+              ignore (input##removeChild n) ;
+              (after, None)
+            | None, Some (str, n) ->
+              (** The node must be inserted. *)
+              let _ =
+                match after with
+                | None -> Dom.appendChild input n
+                | Some after -> Dom.insertBefore input n (Js.Opt.return after) in
+              (Some n, Some (str, n))
+            | Some (_, old), Some (str, n) ->
+              (** The node must be replaced. *)
+              ignore (input##replaceChild n old) ;
+              (Some n, Some (str, n)) in
+          (node :: nodes, after)) ([], None) (List.rev !nodes) (List.rev l) in
+      nodes := nodes' ;
+      if after = None then (
+        input##.disabled := Js.bool true ;
+        current := None ;
+        input##.selectedIndex := -1
+      ) in
   update_interface () ;
+  input##.selectedIndex := -1 ;
   let get _ =
     let l = List.map (fun (_id, _text, v) -> v) (get_current_list ()) in
     let i = input##.selectedIndex in
