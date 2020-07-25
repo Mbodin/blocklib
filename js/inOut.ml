@@ -484,7 +484,7 @@ let createControlableIntegerInput d =
   let get _ =
     let v =
       try int_of_string (Js.to_string input##.value)
-      with _ -> failwith "Unexpected input in [createIntegerInput]." in
+      with _ -> 0 in
     min !ma (max !mi v) in
   let set_min mi' =
     let v = get () in
@@ -528,7 +528,11 @@ let createControlableFloatInput f =
   let set f =
     input##.value := Js.string (print_float (normalise f)) in
   set f ;
-  let get _ = normalise (Float.of_string (Js.to_string input##.value)) in
+  let get _ =
+    let f =
+      try Float.of_string (Js.to_string input##.value)
+      with _ -> 0. in
+    normalise f in
   let set_min mi' =
     let v = get () in
     let mi' =
@@ -836,7 +840,11 @@ let createPercentageInput d =
     let d = max 0. (min 1. d) in
     input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) in
   set d ;
-  let get _ = (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf in
+  let get _ =
+    let v =
+      try Float.of_string (Js.to_string input##.value)
+      with _ -> Float.of_int (maxv / 2) in
+    (max 0. (min maxvf v)) /. maxvf in
   createInputInteraction input get get set
 
 let createDateInput d =
@@ -844,7 +852,9 @@ let createDateInput d =
   let set d =
     input##.value := Js.string (Date.iso8601 d) in
   set d ;
-  let get _ = Date.from_iso8601 (Js.to_string input##.value) in
+  let get _ =
+    try Date.from_iso8601 (Js.to_string input##.value)
+    with _ -> Date.now in
   createInputInteraction input get get set
 
 let createSwitch text descr texton textoff b =
